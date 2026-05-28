@@ -1,0 +1,57 @@
+{
+  "customers": [
+    {
+      "customer_id": "CUST_001",
+      "name": "Alice Johnson",
+      "email": "alice@example.com",
+      "registered_date": "2023-01-15",
+      "orders": [
+        {
+          "order_id": "ORD_12345",
+          "date": "2024-05-20",
+          "amount": 149.99,
+          "status": "delivered",
+          "items": [
+            {"sku": "SHIRT_001", "name": "Blue T-Shirt", "price": 49.99, "qty": 2},
+            {"sku": "SHOE_001", "name": "Running Shoes", "price": 50.01, "qty": 1}
+          ],
+          "category": "apparel",
+          "final_sale": false,
+          "days_since_purchase": 5
+        },
+        {
+          "order_id": "ORD_12346",
+          "date": "2024-04-10",
+          "amount": 299.99,
+          "status": "delivered",
+          "items": [
+            {"sku": "ELECT_001", "name": "Wireless Headphones", "price": 299.99, "qty": 1}
+          ],
+          "category": "electronics",
+          "final_sale": false,
+          "days_since_purchase": 48
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_002",
+      "name": "Bob Smith",
+      "email": "bob@example.com",
+      "registered_date": "2022-06-01",
+      "orders": [
+        {
+          "order_id": "ORD_12347",
+          "date": "2024-05-25",
+          "amount": 89.99,
+          "status": "delivered",
+          "items": [
+            {"sku": "BOOK_001", "name": "Programming Guide (Final Sale)", "price": 89.99, "qty": 1}
+          ],
+          "category": "books",
+          "final_sale": true,
+          "days_since_purchase": 2
+        }
+      ]
+    }
+  ]
+}
