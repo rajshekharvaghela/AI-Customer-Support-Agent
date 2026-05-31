@@ -6,7 +6,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY frontend/ ./frontend/
+COPY backend/ ./backend/
 
-EXPOSE 8501
+# Note: BACKEND_URL is set via docker-compose environment, not .env file
+EXPOSE 8001
 
-CMD ["streamlit", "run", "frontend/app.py", "--server.address=0.0.0.0", "--server.port=8501", "--server.headless=true"]
+CMD ["streamlit", "run", "frontend/app.py", "--server.address=0.0.0.0", "--server.port=8001", "--server.headless=true"]

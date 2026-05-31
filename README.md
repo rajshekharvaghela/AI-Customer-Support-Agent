@@ -37,7 +37,7 @@ The agent uses a 4-node LangGraph pipeline:
 | Frontend | Streamlit | Customer chat + admin dashboard |
 | Backend | FastAPI + Uvicorn | REST API |
 | Agent | LangGraph StateGraph | Orchestration pipeline |
-| LLM | MiniMax-M2.5 (Ollama Cloud) | Ambiguous case reasoning |
+| LLM | ChatGPT, Claude, or MiniMax (Ollama Cloud) | Ambiguous case reasoning with multi-provider support |
 | Data | JSON flat files | Mock CRM + policy |
 | Containers | Docker Compose (ARM64) | Mac Silicon deployment |
 
@@ -56,20 +56,80 @@ docker-compose up --build
 
 ## Getting Your API Key
 
-1. Go to [ollama.com](https://ollama.com) and sign up (no credit card required).
-2. Navigate to **Settings → API Keys**.
-3. Click **Create API Key** and copy the key.
-4. Paste it into your `.env` file as `OLLAMA_CLOUD_API_KEY=your_key_here`.
+The agent supports multiple LLM providers with automatic fallback. Choose one or more:
 
-## Using a Different LLM
+### Option 1: ChatGPT (OpenAI) - Recommended
 
-The agent uses LangChain's OpenAI-compatible client. Change these environment variables:
+1. Go to [platform.openai.com](https://platform.openai.com/api-keys)
+2. Sign up or log in
+3. Navigate to **API Keys**
+4. Click **Create new secret key**
+5. Copy the key and add to `.env`:
+```bash
+OPENAI_API_KEY=sk-proj-...
+OPENAI_MODEL=gpt-4o-mini  # or gpt-4, gpt-4-turbo, etc.
+```
 
-| Provider | OLLAMA_BASE_URL | OLLAMA_MODEL | API Key Variable |
-|----------|-----------------|--------------|------------------|
-| Ollama Cloud (default) | `https://api.ollama.com/v1` | `minimax-m2.5:cloud` | `OLLAMA_CLOUD_API_KEY` |
-| OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` | `OLLAMA_CLOUD_API_KEY` (set to OpenAI key) |
-| Anthropic (via proxy) | Your proxy URL | `claude-3-5-sonnet` | `OLLAMA_CLOUD_API_KEY` |
+### Option 2: Claude (Anthropic)
+
+1. Go to [console.anthropic.com](https://console.anthropic.com/keys)
+2. Sign up or log in
+3. Navigate to **API Keys**
+4. Click **Create Key**
+5. Copy the key and add to `.env`:
+```bash
+ANTHROPIC_API_KEY=sk-ant-...
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022  # or other Claude models
+```
+
+### Option 3: Ollama Cloud (Free - Default)
+
+1. Go to [ollama.com](https://ollama.com) and sign up (no credit card required)
+2. Navigate to **Settings → API Keys**
+3. Click **Create API Key** and copy the key
+4. Add to `.env`:
+```bash
+OLLAMA_CLOUD_API_KEY=your_key_here
+OLLAMA_MODEL=minimax-m2.5:cloud
+```
+
+**Note:** If no API keys are provided, the system will attempt to use a local Ollama installation.
+
+## LLM Provider Configuration
+
+The agent automatically selects the best available LLM based on your `.env` file:
+
+**Priority Order:**
+1. **ChatGPT (OpenAI)** - if `OPENAI_API_KEY` is set
+2. **Claude (Anthropic)** - if `ANTHROPIC_API_KEY` is set
+3. **Ollama Cloud** - if `OLLAMA_CLOUD_API_KEY` is set (fallback)
+
+### Configuration Examples
+
+| Provider | Environment Variables | Example Values |
+|----------|----------------------|-----------------|
+| ChatGPT | `OPENAI_API_KEY`<br/>`OPENAI_MODEL` | `sk-proj-...`<br/>`gpt-4o-mini` |
+| Claude | `ANTHROPIC_API_KEY`<br/>`ANTHROPIC_MODEL` | `sk-ant-...`<br/>`claude-3-5-sonnet-20241022` |
+| Ollama Cloud | `OLLAMA_CLOUD_API_KEY`<br/>`OLLAMA_MODEL` | `your_key_here`<br/>`minimax-m2.5:cloud` |
+
+### To Switch Providers
+
+Simply set the appropriate API key in your `.env` file. The system will automatically:
+- Detect your API keys on startup
+- Select the highest-priority available provider
+- Fall back gracefully if a provider fails to initialize
+
+**Example: Switch from Ollama to OpenAI**
+
+```bash
+# Before (Ollama)
+OLLAMA_CLOUD_API_KEY=your_key_here
+
+# After (OpenAI)
+OPENAI_API_KEY=sk-proj-...
+OPENAI_MODEL=gpt-4o-mini
+# You can leave OLLAMA_CLOUD_API_KEY in the file - it will be ignored if OPENAI_API_KEY is set
+```
 
 ## Refund Policy Summary
 

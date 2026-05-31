@@ -28,7 +28,7 @@ services:
         - linux/arm64
     container_name: refund_agent_frontend
     ports:
-      - "8501:8501"
+      - "8001:8001"
     env_file:
       - .env
     environment:

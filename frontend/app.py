@@ -9,7 +9,9 @@ import requests
 import streamlit as st
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load .env file if it exists (for local development)
+if os.path.exists(".env"):
+    load_dotenv()
 
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
@@ -183,7 +185,8 @@ with tab_chat:
         for msg in st.session_state.conversation_history:
             with st.chat_message(msg["role"]):
                 st.write(msg["content"])
-                if msg.get("decision"):
+                # Only show decision badge for actual refund decisions (not general chat)
+                if msg.get("decision") and msg.get("is_refund_decision"):
                     _display_decision_badge(msg["decision"])
 
         chat_input = st.chat_input("Ask about refunds, orders, or policies...")
@@ -213,15 +216,19 @@ with tab_chat:
                 resp.raise_for_status()
                 result = resp.json()
 
+                # Only mark as refund decision if there are meaningful reasoning steps (more than 1)
+                is_refund_decision = result.get("reasoning_steps") and len(result["reasoning_steps"]) > 1
+
                 st.session_state.conversation_history.append(
                     {
                         "role": "assistant",
                         "content": result["message"],
                         "decision": result.get("decision"),
+                        "is_refund_decision": is_refund_decision,
                     }
                 )
 
-                if result.get("reasoning_steps") and len(result["reasoning_steps"]) > 1:
+                if is_refund_decision:
                     order_match = selected_order_id or "CHAT"
                     _log_decision(result, customer_id, order_match)
 

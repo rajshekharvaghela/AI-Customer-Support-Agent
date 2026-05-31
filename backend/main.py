@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
+import traceback
 from datetime import datetime
 
 from dotenv import load_dotenv
@@ -23,8 +25,11 @@ from backend.models.schemas import (
 )
 from backend.policy import policy_service
 
-load_dotenv()
+# Load .env file if it exists (for local development)
+if os.path.exists(".env"):
+    load_dotenv()
 
+logger = logging.getLogger(__name__)
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "minimax-m2.5:cloud")
 
 app = FastAPI(
@@ -183,6 +188,8 @@ async def chat(request: ChatRequest) -> AgentResponse:
             confidence=0.8,
         )
     except Exception as exc:
+        logger.error(f"Chat error: {str(exc)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Chat processing failed: {exc}") from exc
 
 
