@@ -1,133 +1,286 @@
-import streamlit as st
-import requests
-import json
+"""Streamlit frontend for the Worknoon AI Refund Agent."""
+
+from __future__ import annotations
+
+import os
 from datetime import datetime
 
-# Page configuration
+import requests
+import streamlit as st
+from dotenv import load_dotenv
+
+load_dotenv()
+
+BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+
 st.set_page_config(
-    page_title="AI Refund Agent",
+    page_title="Worknoon AI Refund Agent",
     page_icon="🤖",
     layout="wide",
-    initial_sidebar_state="expanded"
 )
 
-# Custom CSS
-st.markdown("""
+st.markdown(
+    """
 <style>
-    .main {
-        padding: 2rem;
-    }
-    .stTabs [data-baseweb="tab-list"] button {
-        font-size: 18px;
-    }
+    .decision-approved { background-color: #d4edda; color: #155724; padding: 8px 16px;
+        border-radius: 8px; font-weight: bold; display: inline-block; }
+    .decision-denied { background-color: #f8d7da; color: #721c24; padding: 8px 16px;
+        border-radius: 8px; font-weight: bold; display: inline-block; }
+    .decision-escalated { background-color: #fff3cd; color: #856404; padding: 8px 16px;
+        border-radius: 8px; font-weight: bold; display: inline-block; }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
-# Sidebar Configuration
-st.sidebar.title("⚙️ Configuration")
-api_url = st.sidebar.text_input("API URL", value="http://localhost:8000")
-st.sidebar.markdown("---")
 
-# Initialize session state
-if "conversation_history" not in st.session_state:
-    st.session_state.conversation_history = []
-if "current_order_id" not in st.session_state:
-    st.session_state.current_order_id = None
+def _init_session_state() -> None:
+    """Initialize Streamlit session state variables."""
+    if "conversation_history" not in st.session_state:
+        st.session_state.conversation_history = []
+    if "logs" not in st.session_state:
+        st.session_state.logs = []
+    if "last_response" not in st.session_state:
+        st.session_state.last_response = None
 
-# Main layout with tabs
-tab1, tab2, tab3 = st.tabs(["💬 Customer Chat", "📊 Admin Dashboard", "📋 Policy Viewer"])
 
-with tab1:
-    st.header("Customer Refund Request")
-    
-    col1, col2 = st.columns([2, 1])
-    
-    with col1:
-        st.subheader("Submit Your Refund Request")
-        
-        customer_id = st.text_input("Customer ID", placeholder="e.g., CUST_001")
-        order_id = st.text_input("Order ID", placeholder="e.g., ORD_12345")
-        
-        refund_reason = st.selectbox(
-            "Reason for Refund",
-            ["Item not as described", "Changed mind", "Item damaged", "Wrong item received", "Other"]
-        )
-        
-        additional_details = st.text_area("Additional Details")
-        
-        if st.button("Submit Refund Request", use_container_width=True):
-            if customer_id and order_id:
-                # Send to backend
-                message = f"Refund Request - Order: {order_id}, Reason: {refund_reason}. {additional_details}"
-                
-                try:
-                    response = requests.post(
-                        f"{api_url}/api/chat",
-                        json={"user_message": message, "customer_id": customer_id, "order_id": order_id},
-                        timeout=10
-                    )
-                    
-                    if response.status_code == 200:
-                        result = response.json()
-                        st.session_state.conversation_history.append({
-                            "role": "user",
-                            "content": message,
-                            "timestamp": datetime.now().isoformat()
-                        })
-                        st.session_state.conversation_history.append({
-                            "role": "assistant",
-                            "content": result.get("response"),
-                            "decision": result.get("decision"),
-                            "timestamp": datetime.now().isoformat()
-                        })
-                        st.session_state.current_order_id = order_id
-                        st.rerun()
-                    else:
-                        st.error(f"API Error: {response.status_code}")
-                except Exception as e:
-                    st.error(f"Connection Error: {e}")
-            else:
-                st.warning("Please provide Customer ID and Order ID")
-    
-    with col2:
-        st.subheader("Quick Info")
-        st.info("The AI Agent will:\n1. Query your order\n2. Check refund policy\n3. Make decision\n4. Log reasoning")
-
-with tab2:
-    st.header("Admin Dashboard - Agent Reasoning")
-    
-    if st.session_state.current_order_id:
-        col1, col2 = st.columns([1, 2])
-        
-        with col1:
-            st.metric("Last Order Processed", st.session_state.current_order_id)
-        
-        try:
-            response = requests.get(
-                f"{api_url}/api/reasoning/{st.session_state.current_order_id}",
-                timeout=5
-            )
-            if response.status_code == 200:
-                logs = response.json().get("logs", [])
-                st.subheader("Reasoning Logs")
-                for log in logs:
-                    with st.expander(f"Step: {log.get('step', 'Unknown')}"):
-                        st.write(log.get("reasoning", ""))
-        except Exception as e:
-            st.error(f"Failed to fetch logs: {e}")
-    else:
-        st.info("Process a refund request first to see reasoning logs")
-
-with tab3:
-    st.header("Refund Policy Document")
-    
+def _fetch_customers() -> list[dict]:
+    """Fetch customer list from the backend API."""
     try:
-        with open("../backend/policy/refund_policy.txt", "r") as f:
-            policy_content = f.read()
-        st.markdown(policy_content)
-    except FileNotFoundError:
-        st.warning("Policy document not found")
+        resp = requests.get(f"{BACKEND_URL}/api/customers", timeout=10)
+        resp.raise_for_status()
+        return resp.json()
+    except requests.RequestException:
+        return []
 
-# Footer
-st.markdown("---")
-st.markdown("🔧 Built with Streamlit + FastAPI + LangGraph | Worknoon AI Challenge")
+
+def _fetch_orders(customer_id: str) -> list[dict]:
+    """Fetch orders for a customer from the backend API."""
+    try:
+        resp = requests.get(f"{BACKEND_URL}/api/customer/{customer_id}/orders", timeout=10)
+        resp.raise_for_status()
+        return resp.json()
+    except requests.RequestException:
+        return []
+
+
+def _display_decision_badge(decision: str) -> None:
+    """Render a colored decision badge."""
+    icons = {"APPROVED": "🟢", "DENIED": "🔴", "ESCALATED": "🟡"}
+    css_class = {
+        "APPROVED": "decision-approved",
+        "DENIED": "decision-denied",
+        "ESCALATED": "decision-escalated",
+    }
+    icon = icons.get(decision, "⚪")
+    css = css_class.get(decision, "decision-escalated")
+    st.markdown(
+        f'<span class="{css}">{icon} {decision}</span>',
+        unsafe_allow_html=True,
+    )
+
+
+def _log_decision(response: dict, customer_id: str, order_id: str, amount: float = 0) -> None:
+    """Append a decision to the admin logs."""
+    log_entry = {
+        "timestamp": datetime.now().isoformat(),
+        "decision": response.get("decision"),
+        "customer_id": customer_id,
+        "order_id": order_id,
+        "amount": amount,
+        "reasoning_steps": response.get("reasoning_steps", []),
+        "policy_rules_applied": response.get("policy_rules_applied", []),
+        "message": response.get("message", ""),
+        "confidence": response.get("confidence", 0),
+    }
+    st.session_state.logs.insert(0, log_entry)
+    st.session_state.last_response = log_entry
+
+
+_init_session_state()
+
+tab_chat, tab_admin = st.tabs(["💬 Customer Chat", "📊 Admin Dashboard"])
+
+with tab_chat:
+    st.title("AI Refund Assistant")
+
+    customers = _fetch_customers()
+    if not customers:
+        st.error(f"Cannot connect to backend at {BACKEND_URL}. Is the server running?")
+        st.stop()
+
+    customer_options = {f"{c['customer_id']} — {c['name']}": c["customer_id"] for c in customers}
+
+    with st.sidebar:
+        st.header("Customer Selection")
+        selected_label = st.selectbox("Customer ID", options=list(customer_options.keys()))
+        customer_id = customer_options[selected_label]
+
+        orders = _fetch_orders(customer_id)
+        if orders:
+            st.subheader("Your Orders")
+            for order in orders:
+                st.caption(
+                    f"**{order['order_id']}** — {order['product_name']} "
+                    f"(${order['amount']:.2f}) [{order['status']}]"
+                )
+
+    col_form, col_chat = st.columns([1, 1])
+
+    with col_form:
+        st.subheader("Submit Refund Request")
+
+        order_ids = [o["order_id"] for o in orders] if orders else []
+        selected_order_id = st.selectbox("Select Order", options=order_ids) if order_ids else None
+
+        reason = st.text_area("Reason for Refund", placeholder="Describe why you want a refund...")
+        condition = st.radio(
+            "Item Condition",
+            options=["unopened", "opened", "damaged_shipping", "damaged_customer"],
+            format_func=lambda x: {
+                "unopened": "Unopened",
+                "opened": "Opened",
+                "damaged_shipping": "Damaged (Shipping)",
+                "damaged_customer": "Damaged (My Fault)",
+            }[x],
+        )
+
+        if st.button("Submit Refund Request", type="primary", use_container_width=True):
+            if not selected_order_id or not reason.strip():
+                st.warning("Please select an order and provide a reason.")
+            else:
+                try:
+                    resp = requests.post(
+                        f"{BACKEND_URL}/api/refund",
+                        json={
+                            "customer_id": customer_id,
+                            "order_id": selected_order_id,
+                            "reason": reason,
+                            "condition": condition,
+                        },
+                        timeout=60,
+                    )
+                    resp.raise_for_status()
+                    result = resp.json()
+                    st.session_state.last_response = result
+
+                    order_amount = next(
+                        (o["amount"] for o in orders if o["order_id"] == selected_order_id),
+                        0,
+                    )
+                    _log_decision(result, customer_id, selected_order_id, order_amount)
+
+                    st.subheader("Decision")
+                    _display_decision_badge(result["decision"])
+                    st.write(result["message"])
+                    st.caption(f"Confidence: {result['confidence']:.0%}")
+                except requests.RequestException as exc:
+                    st.error(f"Request failed: {exc}")
+
+    with col_chat:
+        st.subheader("Free-Form Chat")
+
+        for msg in st.session_state.conversation_history:
+            with st.chat_message(msg["role"]):
+                st.write(msg["content"])
+                if msg.get("decision"):
+                    _display_decision_badge(msg["decision"])
+
+        chat_input = st.chat_input("Ask about refunds, orders, or policies...")
+        if chat_input:
+            st.session_state.conversation_history.append(
+                {"role": "user", "content": chat_input}
+            )
+
+            try:
+                history_payload = [
+                    {
+                        "role": m["role"],
+                        "content": m["content"],
+                        "timestamp": datetime.now().isoformat(),
+                    }
+                    for m in st.session_state.conversation_history[:-1]
+                ]
+                resp = requests.post(
+                    f"{BACKEND_URL}/api/chat",
+                    json={
+                        "customer_id": customer_id,
+                        "message": chat_input,
+                        "conversation_history": history_payload,
+                    },
+                    timeout=60,
+                )
+                resp.raise_for_status()
+                result = resp.json()
+
+                st.session_state.conversation_history.append(
+                    {
+                        "role": "assistant",
+                        "content": result["message"],
+                        "decision": result.get("decision"),
+                    }
+                )
+
+                if result.get("reasoning_steps") and len(result["reasoning_steps"]) > 1:
+                    order_match = selected_order_id or "CHAT"
+                    _log_decision(result, customer_id, order_match)
+
+                st.rerun()
+            except requests.RequestException as exc:
+                st.error(f"Chat failed: {exc}")
+
+with tab_admin:
+    st.title("Agent Reasoning Logs")
+
+    col_clear, _ = st.columns([1, 4])
+    with col_clear:
+        if st.button("Clear Logs"):
+            st.session_state.logs = []
+            st.session_state.last_response = None
+            st.rerun()
+
+    if st.session_state.last_response:
+        last = st.session_state.last_response
+        st.subheader("Last Processed Request")
+        st.markdown(f"**Decision:** {last.get('decision', 'N/A')} | **Time:** {last.get('timestamp', 'N/A')}")
+
+        st.markdown("**Policy Rules Applied:**")
+        for rule in last.get("policy_rules_applied", []):
+            st.markdown(f"- `{rule}`")
+
+        st.markdown("**Reasoning Timeline:**")
+        for i, step in enumerate(last.get("reasoning_steps", []), 1):
+            st.markdown(f"{i}. {step}")
+
+        st.markdown("**Customer Message:**")
+        st.info(last.get("message", ""))
+
+    st.divider()
+    st.subheader("Recent Decisions (Last 10)")
+
+    if st.session_state.logs:
+        recent = st.session_state.logs[:10]
+        st.dataframe(
+            [
+                {
+                    "Decision": log["decision"],
+                    "Customer": log["customer_id"],
+                    "Order": log["order_id"],
+                    "Amount": f"${log.get('amount', 0):.2f}",
+                    "Time": log["timestamp"][:19],
+                }
+                for log in recent
+            ],
+            use_container_width=True,
+        )
+
+        counts: dict[str, int] = {"APPROVED": 0, "DENIED": 0, "ESCALATED": 0}
+        for log in st.session_state.logs:
+            d = log.get("decision", "")
+            if d in counts:
+                counts[d] += 1
+
+        st.subheader("Decision Distribution")
+        st.bar_chart(counts)
+    else:
+        st.info("No decisions logged yet. Submit a refund request to see reasoning logs.")

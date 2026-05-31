@@ -3,53 +3,361 @@
     {
       "customer_id": "CUST_001",
       "name": "Alice Johnson",
-      "email": "alice@example.com",
-      "registered_date": "2023-01-15",
+      "email": "alice.johnson@email.com",
+      "membership_since": "2022-03-15",
+      "refund_history": [],
       "orders": [
         {
-          "order_id": "ORD_12345",
-          "date": "2024-05-20",
-          "amount": 149.99,
-          "status": "delivered",
-          "items": [
-            {"sku": "SHIRT_001", "name": "Blue T-Shirt", "price": 49.99, "qty": 2},
-            {"sku": "SHOE_001", "name": "Running Shoes", "price": 50.01, "qty": 1}
-          ],
+          "order_id": "ORD_1001",
+          "product_name": "Cotton Crew Neck T-Shirt",
           "category": "apparel",
-          "final_sale": false,
-          "days_since_purchase": 5
+          "amount": 45.99,
+          "order_date": "2026-05-20",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
         },
         {
-          "order_id": "ORD_12346",
-          "date": "2024-04-10",
-          "amount": 299.99,
+          "order_id": "ORD_1002",
+          "product_name": "Classic Denim Jeans",
+          "category": "apparel",
+          "amount": 79.50,
+          "order_date": "2026-05-15",
           "status": "delivered",
-          "items": [
-            {"sku": "ELECT_001", "name": "Wireless Headphones", "price": 299.99, "qty": 1}
-          ],
-          "category": "electronics",
-          "final_sale": false,
-          "days_since_purchase": 48
+          "is_final_sale": false,
+          "condition": "new"
+        },
+        {
+          "order_id": "ORD_1003",
+          "product_name": "Summer Reading Collection",
+          "category": "books",
+          "amount": 34.99,
+          "order_date": "2026-05-10",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        },
+        {
+          "order_id": "ORD_1004",
+          "product_name": "Running Sneakers",
+          "category": "apparel",
+          "amount": 89.00,
+          "order_date": "2026-05-05",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
         }
       ]
     },
     {
       "customer_id": "CUST_002",
       "name": "Bob Smith",
-      "email": "bob@example.com",
-      "registered_date": "2022-06-01",
+      "email": "bob.smith@email.com",
+      "membership_since": "2021-08-22",
+      "refund_history": [],
       "orders": [
         {
-          "order_id": "ORD_12347",
-          "date": "2024-05-25",
-          "amount": 89.99,
+          "order_id": "ORD_1005",
+          "product_name": "Limited Edition Sneakers (Final Sale)",
+          "category": "apparel",
+          "amount": 129.99,
+          "order_date": "2026-05-25",
           "status": "delivered",
-          "items": [
-            {"sku": "BOOK_001", "name": "Programming Guide (Final Sale)", "price": 89.99, "qty": 1}
-          ],
+          "is_final_sale": true,
+          "condition": "new"
+        },
+        {
+          "order_id": "ORD_1006",
+          "product_name": "Winter Jacket",
+          "category": "apparel",
+          "amount": 199.00,
+          "order_date": "2026-05-18",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_003",
+      "name": "Carol Williams",
+      "email": "carol.w@email.com",
+      "membership_since": "2020-11-10",
+      "refund_history": [],
+      "orders": [
+        {
+          "order_id": "ORD_1007",
+          "product_name": "4K Smart TV 65-inch",
+          "category": "electronics",
+          "amount": 899.99,
+          "order_date": "2026-05-22",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        },
+        {
+          "order_id": "ORD_1008",
+          "product_name": "Bluetooth Speaker",
+          "category": "electronics",
+          "amount": 59.99,
+          "order_date": "2026-05-28",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_004",
+      "name": "David Chen",
+      "email": "david.chen@email.com",
+      "membership_since": "2023-06-01",
+      "refund_history": [],
+      "orders": [
+        {
+          "order_id": "ORD_1009",
+          "product_name": "Designer Handbag (Final Sale)",
+          "category": "apparel",
+          "amount": 350.00,
+          "order_date": "2026-05-12",
+          "status": "delivered",
+          "is_final_sale": true,
+          "condition": "new"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_005",
+      "name": "Emma Davis",
+      "email": "emma.davis@email.com",
+      "membership_since": "2019-04-18",
+      "refund_history": [],
+      "orders": [
+        {
+          "order_id": "ORD_1010",
+          "product_name": "Premium Office Desk Set",
+          "category": "furniture",
+          "amount": 649.00,
+          "order_date": "2026-05-08",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_006",
+      "name": "Frank Miller",
+      "email": "frank.m@email.com",
+      "membership_since": "2022-09-30",
+      "refund_history": [],
+      "orders": [
+        {
+          "order_id": "ORD_1011",
+          "product_name": "Leather Belt",
+          "category": "apparel",
+          "amount": 55.00,
+          "order_date": "2026-04-20",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_007",
+      "name": "Grace Taylor",
+      "email": "grace.t@email.com",
+      "membership_since": "2023-02-14",
+      "refund_history": [],
+      "orders": [
+        {
+          "order_id": "ORD_1012",
+          "product_name": "Wireless Earbuds Pro",
+          "category": "electronics",
+          "amount": 149.99,
+          "order_date": "2026-05-10",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_008",
+      "name": "Henry Brown",
+      "email": "henry.b@email.com",
+      "membership_since": "2024-01-05",
+      "refund_history": [],
+      "orders": [
+        {
+          "order_id": "ORD_1013",
+          "product_name": "Gaming Laptop",
+          "category": "electronics",
+          "amount": 1299.00,
+          "order_date": "2026-05-29",
+          "status": "processing",
+          "is_final_sale": false,
+          "condition": "new"
+        },
+        {
+          "order_id": "ORD_1014",
+          "product_name": "USB-C Hub",
+          "category": "electronics",
+          "amount": 39.99,
+          "order_date": "2026-05-27",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_009",
+      "name": "Iris Martinez",
+      "email": "iris.m@email.com",
+      "membership_since": "2022-07-20",
+      "refund_history": [],
+      "orders": [
+        {
+          "order_id": "ORD_1015",
+          "product_name": "Clearance Floor Lamp",
+          "category": "clearance",
+          "amount": 29.99,
+          "order_date": "2026-05-24",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_010",
+      "name": "Jack Wilson",
+      "email": "jack.w@email.com",
+      "membership_since": "2023-11-08",
+      "refund_history": [],
+      "orders": [
+        {
+          "order_id": "ORD_1016",
+          "product_name": "Smart Watch",
+          "category": "electronics",
+          "amount": 249.00,
+          "order_date": "2026-05-01",
+          "status": "cancelled",
+          "is_final_sale": false,
+          "condition": "new"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_011",
+      "name": "Karen Lee",
+      "email": "karen.lee@email.com",
+      "membership_since": "2021-05-12",
+      "refund_history": [
+        {"order_id": "ORD_0901", "amount": 45.00, "date": "2026-04-15", "status": "approved"},
+        {"order_id": "ORD_0902", "amount": 67.50, "date": "2026-04-28", "status": "approved"},
+        {"order_id": "ORD_0903", "amount": 89.99, "date": "2026-05-10", "status": "approved"}
+      ],
+      "orders": [
+        {
+          "order_id": "ORD_1017",
+          "product_name": "Yoga Mat Premium",
+          "category": "apparel",
+          "amount": 49.99,
+          "order_date": "2026-05-26",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_012",
+      "name": "Leo Anderson",
+      "email": "leo.a@email.com",
+      "membership_since": "2023-08-17",
+      "refund_history": [],
+      "orders": [
+        {
+          "order_id": "ORD_1018",
+          "product_name": "Ergonomic Office Chair",
+          "category": "furniture",
+          "amount": 289.00,
+          "order_date": "2026-05-19",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_013",
+      "name": "Mia Thompson",
+      "email": "mia.t@email.com",
+      "membership_since": "2024-03-22",
+      "refund_history": [],
+      "orders": [
+        {
+          "order_id": "ORD_1019",
+          "product_name": "Silk Scarf",
+          "category": "apparel",
+          "amount": 65.00,
+          "order_date": "2026-05-23",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_014",
+      "name": "Nate Garcia",
+      "email": "nate.g@email.com",
+      "membership_since": "2022-12-01",
+      "refund_history": [],
+      "orders": [
+        {
+          "order_id": "ORD_1020",
+          "product_name": "Kitchen Blender Pro",
+          "category": "electronics",
+          "amount": 119.99,
+          "order_date": "2026-05-21",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "opened"
+        }
+      ]
+    },
+    {
+      "customer_id": "CUST_015",
+      "name": "Olivia Park",
+      "email": "olivia.p@email.com",
+      "membership_since": "2020-06-25",
+      "refund_history": [
+        {"order_id": "ORD_0888", "amount": 75.00, "date": "2026-03-10", "status": "approved"}
+      ],
+      "orders": [
+        {
+          "order_id": "ORD_1021",
+          "product_name": "Custom Engraved Watch",
+          "category": "apparel",
+          "amount": 175.00,
+          "order_date": "2026-05-17",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
+        },
+        {
+          "order_id": "ORD_1022",
+          "product_name": "Hardcover Novel Set",
           "category": "books",
-          "final_sale": true,
-          "days_since_purchase": 2
+          "amount": 42.50,
+          "order_date": "2026-04-15",
+          "status": "delivered",
+          "is_final_sale": false,
+          "condition": "new"
         }
       ]
     }

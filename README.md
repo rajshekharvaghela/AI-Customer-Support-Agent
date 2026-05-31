@@ -1,208 +1,130 @@
-# AI Customer Support Refund Agent
+# Worknoon AI Refund Agent
 
-An intelligent system for processing e-commerce refunds using LangGraph agents and local LLMs.
+A production-ready, fully containerized AI customer support agent that processes refund requests using deterministic policy enforcement and LangGraph orchestration, powered by MiniMax-M2.5 via Ollama Cloud.
 
-## Features
-- 🤖 Autonomous refund decision-making using LangGraph
-- 💬 Customer-facing chat interface (Streamlit)
-- 📊 Admin dashboard with agent reasoning logs
-- 🔒 Policy-compliant decision making
-- 🚀 Single-command deployment with Docker
+![Screenshot Placeholder](docs/screenshot.png)
 
-## Architecture
+## Project Overview
 
-### System Components
-1. **Streamlit Frontend** - Customer chat interface + admin dashboard
-2. **FastAPI Backend** - REST API for agent orchestration
-3. **LangGraph Agent** - Autonomous decision-making loop
-4. **Ollama LLM** - Local language model for reasoning
-5. **Mock Database** - Synthetic customer & order data
+The Worknoon AI Refund Agent automates refund decision-making for an e-commerce platform. It reads customer order data from a mock CRM (JSON), applies strict corporate refund policy rules, and escalates edge cases to an LLM only when needed. A Streamlit frontend provides customer chat and an admin reasoning dashboard.
 
-## Prerequisites
-- Docker & Docker Compose
-- Python 3.11+ (for local development)
-- Ollama installed on host machine (for local testing)
+## Architecture Overview
 
-## Quick Start
+The agent uses a 4-node LangGraph pipeline:
 
-### Option 1: Docker Compose (Recommended)
-
-```bash
-# Clone the repository
-git clone git@github.com:YOUR_USERNAME/E_Commerce_Refund_Agent.git
-cd E_Commerce_Refund_Agent
-
-# Start all services
-docker-compose up --build
-
-# Access the application
-- Frontend: http://localhost:8501
-- Backend API: http://localhost:8000
-- Ollama: http://localhost:11434
+```
+┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐     ┌──────────────────┐
+│  load_data  │────▶│ validate_request │────▶│  llm_reasoning  │────▶│ format_response  │
+│             │     │  (deterministic) │     │  (if PENDING)   │     │                  │
+└─────────────┘     └────────┬─────────┘     └─────────────────┘     └──────────────────┘
+                             │
+                             │ (APPROVED / DENIED / ESCALATED)
+                             ▼
+                    ┌──────────────────┐
+                    │ format_response  │────▶ END
+                    └──────────────────┘
 ```
 
-### Option 2: Local Development
+1. **load_data** — Fetches customer, order, policy, and refund history from JSON files.
+2. **validate_request** — Runs all deterministic policy checks (windows, final sale, amount routing, abuse).
+3. **llm_reasoning** — Only invoked for ambiguous `PENDING` cases; uses MiniMax-M2.5 via Ollama Cloud.
+4. **format_response** — Generates a professional customer-facing message.
+
+## Tech Stack
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| Frontend | Streamlit | Customer chat + admin dashboard |
+| Backend | FastAPI + Uvicorn | REST API |
+| Agent | LangGraph StateGraph | Orchestration pipeline |
+| LLM | MiniMax-M2.5 (Ollama Cloud) | Ambiguous case reasoning |
+| Data | JSON flat files | Mock CRM + policy |
+| Containers | Docker Compose (ARM64) | Mac Silicon deployment |
+
+## Quick Start (Docker)
 
 ```bash
-# Clone repository
-git clone git@github.com:YOUR_USERNAME/E_Commerce_Refund_Agent.git
-cd E_Commerce_Refund_Agent
+git clone <repo>
+cd AI-Customer-Support-Agent
+cp .env.example .env
+# Edit .env and add your OLLAMA_CLOUD_API_KEY
+docker-compose up --build
+```
 
-# Create virtual environment
-python3 -m venv venv
-source venv/bin/activate
+- **Frontend:** http://localhost:8501
+- **Backend API:** http://localhost:8000/docs
 
-# Install dependencies
+## Getting Your API Key
+
+1. Go to [ollama.com](https://ollama.com) and sign up (no credit card required).
+2. Navigate to **Settings → API Keys**.
+3. Click **Create API Key** and copy the key.
+4. Paste it into your `.env` file as `OLLAMA_CLOUD_API_KEY=your_key_here`.
+
+## Using a Different LLM
+
+The agent uses LangChain's OpenAI-compatible client. Change these environment variables:
+
+| Provider | OLLAMA_BASE_URL | OLLAMA_MODEL | API Key Variable |
+|----------|-----------------|--------------|------------------|
+| Ollama Cloud (default) | `https://api.ollama.com/v1` | `minimax-m2.5:cloud` | `OLLAMA_CLOUD_API_KEY` |
+| OpenAI | `https://api.openai.com/v1` | `gpt-4o-mini` | `OLLAMA_CLOUD_API_KEY` (set to OpenAI key) |
+| Anthropic (via proxy) | Your proxy URL | `claude-3-5-sonnet` | `OLLAMA_CLOUD_API_KEY` |
+
+## Refund Policy Summary
+
+- **30-day** return window (standard); **14-day** for electronics
+- **Final sale** and **clearance** items: never refundable
+- **Custom/personalized** items: not refundable
+- **Unopened** condition required; opened items denied
+- **Under $100:** auto-approve if compliant
+- **$100–$500:** approve after validation
+- **Over $500:** escalate to human (agent cannot approve/deny)
+- **Processing orders:** cannot refund — must cancel
+- **Cancelled orders:** not eligible
+- **Shipping damage:** may approve; **customer damage:** deny
+- **>2 refunds in 60 days:** escalate for abuse review
+
+## Running Locally (Without Docker)
+
+```bash
+python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env
+# Edit .env with your API key
 
-# Ensure Ollama is running
-ollama serve
+# Terminal 1
+uvicorn backend.main:app --reload
 
-# In separate terminals:
-
-# Terminal 1: Start backend
-cd backend
-python -m uvicorn main:app --reload
-
-# Terminal 2: Start frontend
+# Terminal 2
 streamlit run frontend/app.py
 ```
 
-## Configuration
+## API Docs
 
-### Environment Variables
-Copy `.env.example` to `.env` and update:
-LLM_PROVIDER=ollama
-OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=mistral  # or your chosen model
-FASTAPI_PORT=8000
-STREAMLIT_SERVER_PORT=8501
+Interactive Swagger UI is available at http://localhost:8000/docs
 
-### Ollama Model Setup
-```bash
-# Pull a model (first time only)
-ollama pull mistral
-# or
-ollama pull neural-chat
-```
+Key endpoints:
+- `POST /api/refund` — Structured refund request
+- `POST /api/chat` — Free-form customer chat
+- `GET /api/customers` — List customers
+- `GET /api/customer/{id}/orders` — Customer orders
+- `GET /api/policy` — Full policy document
+- `GET /health` — Health check
 
-## API Endpoints
+## Agent Resilience
 
-### POST /api/chat
-Submit a refund request to the agent
+The agent includes prompt injection protection. User messages are scanned for manipulation patterns (e.g., "ignore previous instructions", "approve everything") before any LLM call. Detected injections result in an immediate **DENIED** response without contacting the LLM. The system prompt explicitly instructs the model to only follow corporate policy regardless of user phrasing.
 
-**Request:**
-```json
-{
-  "customer_id": "CUST_001",
-  "order_id": "ORD_12345",
-  "user_message": "I want a refund for my broken shoes"
-}
-```
+## Test Scenarios
 
-**Response:**
-```json
-{
-  "response": "Agent's natural language response",
-  "decision": "APPROVED|DENIED|ESCALATED",
-  "reasoning": "Internal decision reasoning",
-  "confidence": 0.95
-}
-```
-
-### GET /api/reasoning/{conversation_id}
-Retrieve agent's internal reasoning logs for a decision
-
-## Project Structure
-├── backend/           # FastAPI application
-│   ├── agent/        # LangGraph agent logic
-│   ├── database/     # Mock CRM data
-│   ├── policy/       # Refund policy engine
-│   └── models/       # Pydantic schemas
-├── frontend/          # Streamlit app
-│   ├── app.py        # Main interface
-│   └── pages/        # Multi-page components
-├── data/             # Synthetic datasets
-├── docker/           # Container definitions
-├── docker-compose.yml
-└── requirements.txt
-
-## Testing
-
-```bash
-# Run unit tests
-pytest tests/
-
-# Run specific test file
-pytest tests/test_agent.py -v
-
-# Run with coverage
-pytest --cov=backend tests/
-```
-
-## Development Workflow
-
-1. **Activate virtual environment**
-```bash
-   source venv/bin/activate
-```
-
-2. **Install new dependencies**
-```bash
-   pip install package_name
-   pip freeze > requirements.txt
-```
-
-3. **Make changes and test locally**
-```bash
-   pytest
-```
-
-4. **Commit and push**
-```bash
-   git add .
-   git commit -m "Feature: description"
-   git push origin main
-```
-
-## Performance Considerations
-- Ollama model response time: ~2-5 seconds
-- Agent loop execution: ~5-10 seconds total
-- Streamlit page load: ~1-2 seconds
-
-## Known Limitations
-- Local Ollama models may have lower reasoning accuracy than GPT-4/Claude
-- Mock database is static (no persistence)
-- Single-threaded agent loop (can add async support if needed)
-
-## Future Enhancements
-- WebSocket support for real-time chat streaming
-- Database persistence with PostgreSQL
-- Multi-language support
-- Advanced analytics dashboard
-- A/B testing framework for policy variations
-
-## Troubleshooting
-
-**Docker build fails:**
-```bash
-docker-compose down -v
-docker-compose build --no-cache
-docker-compose up
-```
-
-**Ollama connection error:**
-Ensure Ollama service is running: `ollama serve` or check `http://localhost:11434`
-
-**Port already in use:**
-```bash
-# Kill process on port 8000 (macOS)
-lsof -ti:8000 | xargs kill -9
-```
-
-## Support
-For questions, please refer to the Worknoon interview instructions or open a GitHub issue.
-
----
-
-**Submission**: Please ensure all tests pass and documentation is complete before submitting.
+| Customer | Order | Expected |
+|----------|-------|----------|
+| CUST_001 | ORD_1001 | APPROVED ($45.99, within window) |
+| CUST_002 | ORD_1005 | DENIED (final sale) |
+| CUST_003 | ORD_1007 | ESCALATED ($899.99 > $500) |
+| CUST_006 | ORD_1011 | DENIED (>30 days) |
+| CUST_007 | ORD_1012 | DENIED (electronics >14 days) |
+| CUST_008 | ORD_1013 | DENIED (processing) |
+| CUST_009 | ORD_1015 | DENIED (clearance) |
+| CUST_011 | ORD_1017 | ESCALATED (refund abuse) |
